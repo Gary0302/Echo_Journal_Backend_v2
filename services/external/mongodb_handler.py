@@ -233,3 +233,66 @@ async def get_distinct_journal_dates_in_range(uid: str, start_date: datetime, en
         return []
 
 # --- End Placeholders ---
+async def get_distinct_journal_dates_in_range(uid: str, start_date: datetime, end_date: datetime) -> List[str]:
+    """
+    Retrieves distinct dates (YYYY-MM-DD format strings) with journal entries
+    for a user within a specified date range (inclusive start, exclusive end).
+    Queries the 'journals' collection.
+
+    Args:
+        uid: The User Identifier.
+        start_date: The beginning of the date range (timezone-aware recommended).
+        end_date: The end of the date range (timezone-aware recommended).
+
+    Returns:
+        A sorted list of distinct date strings ("YYYY-MM-DD"), or empty list on error.
+    """
+    journals_collection = await get_journals_collection()
+    logger.debug(f"Querying distinct journal dates in '{JOURNALS_COLLECTION}' for UID '{uid}' from {start_date} to {end_date}")
+    try:
+        # Ensure the pipeline matches your document structure ('UID', 'created_at')
+        # Adjust timezone in $dateToString if your created_at is stored differently
+        pipeline = [
+            {
+                # Filter by user and date range
+                "$match": {
+                    "UID": uid,
+                    "created_at": {"$gte": start_date, "$lt": end_date}
+                }
+            },
+            {
+                # Extract date part as string
+                "$project": {
+                    "dateStr": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d",
+                            "date": "$created_at",
+                            "timezone": "UTC" # Use UTC or your DB's timezone
+                        }
+                    }
+                }
+            },
+            {
+                # Group by date string to get unique dates
+                "$group": {
+                    "_id": "$dateStr"
+                }
+            },
+            {
+                # Sort the dates chronologically
+                "$sort": { "_id": 1 }
+            },
+            {
+                 # Reshape the output to just the date string
+                 "$project": { "_id": 0, "date": "$_id"}
+            }
+        ]
+        # Execute the aggregation pipeline
+        results = await journals_collection.aggregate(pipeline).to_list(length=None)
+        # Extract the date strings from the results
+        dates = [result["date"] for result in results if "date" in result]
+        logger.info(f"Found {len(dates)} distinct journal dates for UID '{uid}' in range.")
+        return dates
+    except Exception as e:
+        logger.error(f"Error retrieving distinct journal dates from '{JOURNALS_COLLECTION}' for UID '{uid}': {e}", exc_info=True)
+        return [] # Return empty list on error

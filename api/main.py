@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from api.routers import user, dashboard, journal # Import your routers
+from api.routers import user, dashboard, journal, anonymous # Import your routers
 from core.db import db_manager # Import the db connection manager
 
 # --- Lifespan Management ---
@@ -38,7 +38,8 @@ app.add_middleware(
 # --- Routers ---
 app.include_router(user.router, prefix="/api", tags=["User"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
-app.include_router(journal.router, prefix="/api", tags=["Journal"]) # Assuming journal endpoints are under /api
+app.include_router(journal.router, prefix="/api", tags=["Journal"]) 
+app.include_router(anonymous.router, prefix="/api", tags=["Anonymous"])# Assuming journal endpoints are under /api
 
 # --- Root Endpoint (Optional Health Check) ---
 @app.get("/", tags=["Root"])
@@ -49,14 +50,14 @@ async def read_root():
 # --- Run with Uvicorn (for local development) ---
 # You would typically run this using: uvicorn api.main:app --reload
 # Example run block (optional, usually run via command line)
-# if __name__ == "__main__":
-#     import uvicorn
-#     from core.config import settings
-#     # Note: settings.host and settings.port are examples,
-#     # ensure they are defined in your Settings model if you use them here.
-#     uvicorn.run(
-#         "api.main:app",
-#         host=getattr(settings, 'host', "127.0.0.1"),
-#         port=getattr(settings, 'port', 8000),
-#         reload=True # Enable auto-reload for development
-#     )
+if __name__ == "__main__":
+    import uvicorn
+    from core.config import settings
+    # Note: settings.host and settings.port are examples,
+    # ensure they are defined in your Settings model if you use them here.
+    uvicorn.run(
+        "api.main:app",
+        host=getattr(settings, 'host', "127.0.0.1"),
+        port=getattr(settings, 'port', 8000),
+        reload=True # Enable auto-reload for development
+    )
