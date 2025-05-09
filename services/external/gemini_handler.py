@@ -32,7 +32,7 @@ except Exception as e:
 
 # Define model name (use the one from user's V1/example)
 # Ensure this model name is compatible with the Client API version you are using
-GEMINI_MODEL_NAME = "gemini-1.5-flash" # Or "gemini-2.0-flash" / "gemini-pro" etc.
+GEMINI_MODEL_NAME = "gemini-2.0-flash" # Or "gemini-2.0-flash" / "gemini-pro" etc.
 
 # --- System Prompts ---
 SYSTEM_PROMPT_EMOTION_BREAKDOWN = """
